@@ -8,6 +8,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.Intent
+import android.content.ComponentName
+import android.app.PendingIntent
+import android.view.View
+import android.graphics.Color
+
+
+
+
+private const val ACTION_TOGGLE_PAGE =
+    "com.example.pokemonmatrixwidget.ACTION_TOGGLE_PAGE"
+
+private const val PREFS_NAME = "pokemon_widget_prefs"
+private const val KEY_PAGE_PREFIX = "page_"
+
+private fun getCurrentPage(context: Context, appWidgetId: Int): Int {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getInt(KEY_PAGE_PREFIX + appWidgetId, 0)
+}
+
+private fun setCurrentPage(context: Context, appWidgetId: Int, page: Int) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putInt(KEY_PAGE_PREFIX + appWidgetId, page).apply()
+}
+
 
 /**
  * App Widget implementation for the daily Pokémon dot-matrix widget.
@@ -20,25 +45,41 @@ import kotlinx.coroutines.withContext
  */
 class DailyPokemonWidget : AppWidgetProvider() {
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+
+        if (intent.action == ACTION_TOGGLE_PAGE) {
+            val appWidgetId = intent.getIntExtra(
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                val current = getCurrentPage(context, appWidgetId)
+                val next = if (current == 0) 1 else 0
+                setCurrentPage(context, appWidgetId, next)
+
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                updateAppWidget(context, appWidgetManager, appWidgetId)
+            }
+        }
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }
 
-    override fun onEnabled(context: Context) {
-        // Called when the first widget instance is added.
-    }
+    override fun onEnabled(context: Context) { }
 
-    override fun onDisabled(context: Context) {
-        // Called when the last widget instance is removed.
-    }
+    override fun onDisabled(context: Context) { }
 }
+
 
 /**
  * Updates a single widget instance.
@@ -50,40 +91,83 @@ internal fun updateAppWidget(
 ) {
     val views = RemoteViews(context.packageName, R.layout.widget_pokemon)
 
+    // 1. Set up "tap to toggle page"
+    val intent = Intent(context, DailyPokemonWidget::class.java).apply {
+        action = ACTION_TOGGLE_PAGE
+        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+    }
+
+    val pendingIntent = PendingIntent.getBroadcast(
+        context,
+        appWidgetId,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    // Tap anywhere in the main circle to toggle
+    views.setOnClickPendingIntent(R.id.page_container, pendingIntent)
+
+    // 2. Get current page
+    val page = getCurrentPage(context, appWidgetId)
+
     GlobalScope.launch(Dispatchers.IO) {
         try {
-            // 1. Get today's Pokémon ID (seeded random)
             val pokemonId = PokemonOfDay.getTodayPokemonId()
-
-            // 2. Download the sprite bitmap
             val sprite = SpriteDownloader.fetchPokemonSprite(pokemonId)
 
-            // 3. Convert to dot-matrix using your tuned renderer
             val dotBitmap = sprite?.let { src ->
-                // Keep your grid + cellSize, just scale the final image
-                DotMatrixRenderer.toDotMatrixScaled(
+                DotMatrixRenderer.toDotMatrix(
                     src,
-                    gridWidth = 60,
-                    gridHeight = 60,
-                    cellSize = 5,
-                    scale = 5.0f  // try 0.8f, 0.9f, 1.2f etc.
+                    gridWidth = 50,
+                    gridHeight = 50,
+                    cellSize = 5
                 )
             }
 
+            // NEW: fetch name + description
+            val info = PokemonInfoFetcher.getPokemonInfo(pokemonId)
+            val pokemonName = info?.name ?: "Unknown"
+            val pokemonDescription = info?.description ?: ""
 
-            // 4. Update the widget views (image only)
             withContext(Dispatchers.Main) {
-                if (dotBitmap != null) {
-                    views.setImageViewBitmap(R.id.image_pokemon, dotBitmap)
+                val page = getCurrentPage(context, appWidgetId)
+
+                if (page == 0) {
+                    // Image page
+                    views.setViewVisibility(R.id.image_pokemon, View.VISIBLE)
+                    views.setViewVisibility(R.id.details_container, View.GONE)
+
+                    if (dotBitmap != null) {
+                        views.setImageViewBitmap(R.id.image_pokemon, dotBitmap)
+                    }
+                    // dots: page 0 active
+                    views.setTextColor(R.id.page_dot_1, Color.WHITE)
+                    views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
+                } else {
+                    // Details page
+                    views.setViewVisibility(R.id.image_pokemon, View.GONE)
+                    views.setViewVisibility(R.id.details_container, View.VISIBLE)
+
+                    views.setTextViewText(R.id.text_name, pokemonName)
+                    views.setTextViewText(
+                        R.id.text_number,
+                        "#${pokemonId.toString().padStart(3, '0')}"
+                    )
+                    views.setTextViewText(R.id.text_description, pokemonDescription)
+
+                    // dots: page 1 active
+                    views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
+                    views.setTextColor(R.id.page_dot_2, Color.WHITE)
                 }
+
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         } catch (e: Exception) {
-            // If something goes wrong, just update without changing the image
             withContext(Dispatchers.Main) {
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }
     }
 }
+
 
