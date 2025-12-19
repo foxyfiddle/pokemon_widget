@@ -22,7 +22,8 @@ object DotMatrixRenderer {
         val outBitmap = Bitmap.createBitmap(outWidth, outHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(outBitmap)
 
-        canvas.drawColor(Color.BLACK)
+        canvas.drawColor(Color.parseColor("#1B1B1D"))
+
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE

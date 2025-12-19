@@ -125,7 +125,7 @@ class DailyPokemonWidget : AppWidgetProvider() {
                 views.setViewVisibility(R.id.name_container, View.VISIBLE)
                 views.setViewVisibility(R.id.description_container, View.GONE)
 
-                views.setTextViewText(R.id.text_name, nameToUse)
+                views.setTextViewText(R.id.text_name, nameToUse.uppercase())
                 views.setTextViewText(
                     R.id.text_number,
                     "#${idToUse.toString().padStart(3, '0')}"
@@ -273,7 +273,7 @@ internal fun updateAppWidget(
                         views.setViewVisibility(R.id.name_container, View.VISIBLE)
                         views.setViewVisibility(R.id.description_container, View.GONE)
 
-                        views.setTextViewText(R.id.text_name, pokemonName)
+                        views.setTextViewText(R.id.text_name, pokemonName.uppercase())
                         views.setTextViewText(
                             R.id.text_number,
                             "#${pokemonInfo.id.toString().padStart(3, '0')}"

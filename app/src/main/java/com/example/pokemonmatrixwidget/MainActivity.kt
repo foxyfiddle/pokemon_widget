@@ -7,7 +7,6 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,24 +15,30 @@ class MainActivity : AppCompatActivity() {
 
         val imageView = findViewById<ImageView>(R.id.imagePokemon)
 
-        // 1) Choose a Pokémon ID (25 = Pikachu)
-        val pokemonId = 965
+        // Use the same "daily Pokémon" as the widget
+        val pokemonId = PokemonOfDay.getTodayPokemonId()
 
-        // 2) Run network call on a background thread (IO dispatcher)
         lifecycleScope.launch(Dispatchers.IO) {
+            // 1) Download the sprite for today's Pokémon
             val sprite = SpriteDownloader.fetchPokemonSprite(pokemonId)
 
-            // If we successfully got a sprite, convert it to dot-matrix
+            // 2) Convert it to a dot–matrix bitmap
             val dotBitmap = sprite?.let {
-                DotMatrixRenderer.toDotMatrix(it, gridWidth = 18, gridHeight = 18)
+                DotMatrixRenderer.toDotMatrix(
+                    it,
+                    gridWidth = 50,
+                    gridHeight = 50,
+                    cellSize = 5
+                )
             }
 
+            // 3) Show it in the ImageView on the main thread
             withContext(Dispatchers.Main) {
                 if (dotBitmap != null) {
                     imageView.setImageBitmap(dotBitmap)
                 }
             }
         }
-
     }
 }
+
