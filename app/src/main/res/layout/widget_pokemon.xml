@@ -7,13 +7,12 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
-    <!-- Main content: image or details -->
+    <!-- Main content: image / name+number / description -->
     <FrameLayout
         android:id="@+id/page_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:foregroundGravity="center">
+        android:layout_weight="1">
 
         <!-- Page 0: dot-matrix Pokémon -->
         <ImageView
@@ -72,8 +71,32 @@
                 android:ellipsize="end"
                 android:gravity="center_horizontal" />
         </LinearLayout>
-    </FrameLayout>
 
+        <!-- Touch zones overlay (on top of content) -->
+        <LinearLayout
+            android:id="@+id/touch_zones"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/tap_top"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:background="@android:color/transparent" />
+
+            <LinearLayout
+                android:id="@+id/tap_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
+    </FrameLayout>
 
     <!-- Page indicator dots on the right -->
     <LinearLayout
@@ -88,7 +111,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="●"
-            android:textSize="4.5sp"
+            android:textSize="4.2sp"
             android:textColor="#FFFFFF" />
 
         <TextView
@@ -97,7 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="●"
-            android:textSize="4.5sp"
+            android:textSize="4.2sp"
             android:textColor="#555555" />
 
         <TextView
@@ -106,10 +129,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="●"
-            android:textSize="4.5sp"
+            android:textSize="4.2sp"
             android:textColor="#555555" />
     </LinearLayout>
 
-
 </LinearLayout>
+
 
