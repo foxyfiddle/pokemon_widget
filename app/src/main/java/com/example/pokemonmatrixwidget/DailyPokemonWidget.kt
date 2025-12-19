@@ -73,12 +73,11 @@ class DailyPokemonWidget : AppWidgetProvider() {
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
                 val appWidgetManager = AppWidgetManager.getInstance(context)
 
-                // Flip page
+                // Flip page: 0 -> 1 -> 2 -> 0
                 val current = getCurrentPage(context, appWidgetId)
-                val next = if (current == 0) 1 else 0
+                val next = (current + 1) % 3
                 setCurrentPage(context, appWidgetId, next)
 
-                // Build fast RemoteViews using cache
                 val views = RemoteViews(context.packageName, R.layout.widget_pokemon)
 
                 val today = LocalDate.now(ZoneId.systemDefault())
@@ -95,31 +94,49 @@ class DailyPokemonWidget : AppWidgetProvider() {
                 val nameToUse = savedName ?: "Unknown"
                 val descToUse = savedDesc ?: ""
 
-                if (next == 0) {
-                    // Image page
-                    views.setViewVisibility(R.id.image_pokemon, View.VISIBLE)
-                    views.setViewVisibility(R.id.details_container, View.GONE)
+                when (next) {
+                    0 -> {
+                        // Page 0: Image
+                        views.setViewVisibility(R.id.image_pokemon, View.VISIBLE)
+                        views.setViewVisibility(R.id.name_container, View.GONE)
+                        views.setViewVisibility(R.id.description_container, View.GONE)
 
-                    if (bitmap != null) {
-                        views.setImageViewBitmap(R.id.image_pokemon, bitmap)
+                        if (bitmap != null) {
+                            views.setImageViewBitmap(R.id.image_pokemon, bitmap)
+                        }
+
+                        views.setTextColor(R.id.page_dot_1, Color.WHITE)
+                        views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_3, 0x55FFFFFF.toInt())
                     }
+                    1 -> {
+                        // Page 1: name + number
+                        views.setViewVisibility(R.id.image_pokemon, View.GONE)
+                        views.setViewVisibility(R.id.name_container, View.VISIBLE)
+                        views.setViewVisibility(R.id.description_container, View.GONE)
 
-                    views.setTextColor(R.id.page_dot_1, Color.WHITE)
-                    views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
-                } else {
-                    // Details page
-                    views.setViewVisibility(R.id.image_pokemon, View.GONE)
-                    views.setViewVisibility(R.id.details_container, View.VISIBLE)
+                        views.setTextViewText(R.id.text_name, nameToUse)
+                        views.setTextViewText(
+                            R.id.text_number,
+                            "#${idToUse.toString().padStart(3, '0')}"
+                        )
 
-                    views.setTextViewText(R.id.text_name, nameToUse)
-                    views.setTextViewText(
-                        R.id.text_number,
-                        "#${idToUse.toString().padStart(3, '0')}"
-                    )
-                    views.setTextViewText(R.id.text_description, descToUse)
+                        views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_2, Color.WHITE)
+                        views.setTextColor(R.id.page_dot_3, 0x55FFFFFF.toInt())
+                    }
+                    2 -> {
+                        // Page 2: description
+                        views.setViewVisibility(R.id.image_pokemon, View.GONE)
+                        views.setViewVisibility(R.id.name_container, View.GONE)
+                        views.setViewVisibility(R.id.description_container, View.VISIBLE)
 
-                    views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
-                    views.setTextColor(R.id.page_dot_2, Color.WHITE)
+                        views.setTextViewText(R.id.text_description, descToUse)
+
+                        views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_3, Color.WHITE)
+                    }
                 }
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -152,7 +169,7 @@ internal fun updateAppWidget(
 ) {
     val views = RemoteViews(context.packageName, R.layout.widget_pokemon)
 
-    // 1. Set up "tap to toggle page"
+    // Tap the main container to toggle pages
     val intent = Intent(context, DailyPokemonWidget::class.java).apply {
         action = ACTION_TOGGLE_PAGE
         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -165,7 +182,6 @@ internal fun updateAppWidget(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    // Tap the main container to toggle pages
     views.setOnClickPendingIntent(R.id.page_container, pendingIntent)
 
     GlobalScope.launch(Dispatchers.IO) {
@@ -215,29 +231,49 @@ internal fun updateAppWidget(
             withContext(Dispatchers.Main) {
                 val page = getCurrentPage(context, appWidgetId)
 
-                if (page == 0) {
-                    views.setViewVisibility(R.id.image_pokemon, View.VISIBLE)
-                    views.setViewVisibility(R.id.details_container, View.GONE)
+                when (page) {
+                    0 -> {
+                        // Page 0: image
+                        views.setViewVisibility(R.id.image_pokemon, View.VISIBLE)
+                        views.setViewVisibility(R.id.name_container, View.GONE)
+                        views.setViewVisibility(R.id.description_container, View.GONE)
 
-                    if (bitmap != null) {
-                        views.setImageViewBitmap(R.id.image_pokemon, bitmap)
+                        if (bitmap != null) {
+                            views.setImageViewBitmap(R.id.image_pokemon, bitmap)
+                        }
+
+                        views.setTextColor(R.id.page_dot_1, Color.WHITE)
+                        views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_3, 0x55FFFFFF.toInt())
                     }
+                    1 -> {
+                        // Page 1: name + number
+                        views.setViewVisibility(R.id.image_pokemon, View.GONE)
+                        views.setViewVisibility(R.id.name_container, View.VISIBLE)
+                        views.setViewVisibility(R.id.description_container, View.GONE)
 
-                    views.setTextColor(R.id.page_dot_1, Color.WHITE)
-                    views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
-                } else {
-                    views.setViewVisibility(R.id.image_pokemon, View.GONE)
-                    views.setViewVisibility(R.id.details_container, View.VISIBLE)
+                        views.setTextViewText(R.id.text_name, pokemonName)
+                        views.setTextViewText(
+                            R.id.text_number,
+                            "#${pokemonInfo.id.toString().padStart(3, '0')}"
+                        )
 
-                    views.setTextViewText(R.id.text_name, pokemonName)
-                    views.setTextViewText(
-                        R.id.text_number,
-                        "#${pokemonInfo.id.toString().padStart(3, '0')}"
-                    )
-                    views.setTextViewText(R.id.text_description, pokemonDescription)
+                        views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_2, Color.WHITE)
+                        views.setTextColor(R.id.page_dot_3, 0x55FFFFFF.toInt())
+                    }
+                    2 -> {
+                        // Page 2: description
+                        views.setViewVisibility(R.id.image_pokemon, View.GONE)
+                        views.setViewVisibility(R.id.name_container, View.GONE)
+                        views.setViewVisibility(R.id.description_container, View.VISIBLE)
 
-                    views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
-                    views.setTextColor(R.id.page_dot_2, Color.WHITE)
+                        views.setTextViewText(R.id.text_description, pokemonDescription)
+
+                        views.setTextColor(R.id.page_dot_1, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_2, 0x55FFFFFF.toInt())
+                        views.setTextColor(R.id.page_dot_3, Color.WHITE)
+                    }
                 }
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -249,6 +285,7 @@ internal fun updateAppWidget(
         }
     }
 }
+
 
 
 

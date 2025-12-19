@@ -27,7 +27,7 @@
 
         <!-- Page 1: name + number -->
         <LinearLayout
-            android:id="@+id/details_container"
+            android:id="@+id/name_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -50,20 +50,30 @@
                 android:layout_marginTop="2dp"
                 android:textColor="#B0B0B0"
                 android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Page 2: description -->
+        <LinearLayout
+            android:id="@+id/description_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/text_description"
                 android:layout_width="120dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
                 android:textColor="#B0B0B0"
                 android:textSize="11sp"
-                android:maxLines="3"
+                android:maxLines="10"
                 android:ellipsize="end"
                 android:gravity="center_horizontal" />
         </LinearLayout>
-
     </FrameLayout>
+
 
     <!-- Page indicator dots on the right -->
     <LinearLayout
@@ -85,11 +95,21 @@
             android:id="@+id/page_dot_2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
+            android:text="●"
+            android:textSize="4.5sp"
+            android:textColor="#555555" />
+
+        <TextView
+            android:id="@+id/page_dot_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="●"
             android:textSize="4.5sp"
             android:textColor="#555555" />
     </LinearLayout>
+
 
 </LinearLayout>
 
